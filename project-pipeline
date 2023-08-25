@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    
+     environment {
+         DOCKERHUB_CREDENTIALS= credentials('dockerhub')
+        DOCKER_HUB_REPO = "dhanraj6377/java-appplication"
+        IMAGE_TAG = "latest"
+    }
+
+    stages {
+        stage('Clone Git Repository') {
+            steps {
+                sh 'git clone https://github.com/dhanraj2525/CI-CD-projenct.git '
+                sh 'ls '
+            }
+        }
+        stage('Test Project') {
+            steps {
+                sh '''
+                    cd CI-CD-projenct
+                    mvn test
+                '''
+                
+            }
+        }
+        stage('Build  Project') {
+            steps {
+                sh '''
+                    cd CI-CD-projenct
+                    mvn install
+                '''
+                
+            }
+        }
+        stage('Build Image ') {
+            steps {
+                sh '''
+                    cd CI-CD-projenct
+                    docker image build -t dhanraj6377/java-appplication .
+                '''
+                
+            }
+        }
+        stage('Login to Docker Hub') {         
+            steps{                            
+	            sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'                 
+            	echo 'Login Completed'                
+            }           
+        }  
+        stage('Push Image to Docker Hub') {         
+            steps{                            
+            	sh 'docker push $DOCKER_HUB_REPO:$IMAGE_TAG'            
+            }           
+         }  
+    }
+    post{
+    always {  
+      sh 'docker logout'           
+    }      
+  }  
+}
